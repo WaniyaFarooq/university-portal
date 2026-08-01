@@ -8,6 +8,9 @@ class User(AbstractUser):
         ('TEACHER','Teacher'),
         ('ADMIN','Admin')
     )
-    role = models.CharField(
-        max_length=20,choices=ROLE_CHOICES,default='STUDENT'
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    profile_picture = models.ImageField(
+        upload_to="profile_pics/",
+        blank=True,
+        null=True
     )

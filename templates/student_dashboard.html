@@ -6,6 +6,10 @@
     <title>Document</title>
 </head>
 <body>
-  
+    {% if user.profile_picture %}
+    <img src="{{ user.profile_picture.url }}">
+{% else %}
+    <img src="{% static 'images/default-profile.png' %}">
+{% endif %}
 </body>
 </html>
