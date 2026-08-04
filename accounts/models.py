@@ -1,189 +1,439 @@
-from django.core.validators import RegexValidator,MaxLengthValidator,MaxValueValidator,MinLengthValidator,MinValueValidator
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.db.models import CASCADE
-# Create your models here.
-
-registration_validator = RegexValidator(
-    regex= rf'SP\d{2}-[A-Z]{3}-\d{3}$',
-    message='Registration Number must be like SP24-BAI-001'
+from django.core.validators import (
+    RegexValidator,
+    MaxValueValidator,
+    MinValueValidator,
+    MinLengthValidator
 )
 
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+
+# =========================
+# Validators
+# =========================
+
+registration_validator = RegexValidator(
+    regex=r'SP\d{2}-[A-Z]{3}-\d{3}$',
+    message="Registration Number must be like SP24-BAI-001"
+)
+
+
+# =========================
+# Custom User
+# =========================
+
 class User(AbstractUser):
+
     ROLE_CHOICES = (
-        ('STUDENT','Student'),
-        ('TEACHER','Teacher'),
+        ('STUDENT', 'Student'),
+        ('TEACHER', 'Teacher'),
+        ('ADMIN', 'Admin'),
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES ,default="STUDENT")
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="STUDENT"
+    )
+
     profile_picture = models.ImageField(
         upload_to="profile_pics/",
         blank=True,
         null=True
     )
-    
-class Department(models.Model):
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=4,unique=True)
-    
-    def __str__(self):
-        return self.name
-    
-       
-class Batch(models.Model):
-    name = models.CharField(max_length=4, unique=True, validators= [MinLengthValidator(4)])
 
     def __str__(self):
-        return self.name 
-    
+        return self.username
+
+
+
+# =========================
+# Department
+# =========================
+
+class Department(models.Model):
+
+    name = models.CharField(
+        max_length=100
+    )
+
+    code = models.CharField(
+        max_length=4,
+        unique=True
+    )
+
+
+    def __str__(self):
+        return self.name
+
+
+
+# =========================
+# Batch
+# =========================
+
+class Batch(models.Model):
+
+    name = models.CharField(
+        max_length=4,
+        unique=True,
+        validators=[
+            MinLengthValidator(4)
+        ]
+    )
+
+
+    def __str__(self):
+        return self.name
+
+
+
+# =========================
+# Academic Session
+# =========================
+
+class AcademicSession(models.Model):
+
+    name = models.CharField(
+        max_length=20,
+        unique=True
+    )
+
+    start_year = models.PositiveIntegerField()
+
+    end_year = models.PositiveIntegerField()
+
+
+    def __str__(self):
+        return self.name
+
+
+
+# =========================
+# Student
+# =========================
+
 class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=CASCADE,related_name="student_profile") 
-    # uper wala user model k attributes k li
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="student_profile"
+    )
+
+
     registration_number = models.CharField(
-        unique = True,
         max_length=12,
-        validators=[registration_validator]
+        unique=True,
+        validators=[
+            registration_validator
+        ]
     )
+
+
     semester = models.PositiveIntegerField(
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(8)
-                    ]
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(8)
+        ]
     )
-    cgpa = models.DecimalField(max_digits=4,decimal_places=2,
-                               validators=[MaxValueValidator(4.00),MinValueValidator(0.00)])
+
+
+    cgpa = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(4)
+        ]
+    )
+
+
     batch = models.ForeignKey(
-    Batch,
-    on_delete=models.PROTECT
+        Batch,
+        on_delete=models.PROTECT,
+        related_name="students"
     )
+
+
     department = models.ForeignKey(
         Department,
-        related_name="students",
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name="students"
     )
+
 
     def __str__(self):
         return self.registration_number
-       
+
+
+
+
+# =========================
+# Teacher
+# =========================
+
 class Teacher(models.Model):
-    
-    user =models.OneToOneField(
-        User, on_delete=models.CASCADE
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="teacher_profile"
     )
-    department = models.ForeignKey(  
+
+
+    department = models.ForeignKey(
         Department,
-        related_name="teachers",
-        on_delete= models.PROTECT
+        on_delete=models.PROTECT,
+        related_name="teachers"
     )
+
+
     employee_id = models.CharField(
         max_length=20,
         unique=True
     )
-    specialization = models.CharField(max_length=100)
-    
+
+
+    specialization = models.CharField(
+        max_length=100
+    )
+
+
     def __str__(self):
         return self.employee_id
-    
+
+
+
+
+# =========================
+# Subject
+# =========================
+
 class Subject(models.Model):
+
     department = models.ForeignKey(
         Department,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="subjects"
     )
 
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=20)
+
+    name = models.CharField(
+        max_length=100
+    )
+
+
+    code = models.CharField(
+        max_length=20
+    )
+
+
+    semester = models.PositiveIntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(8)
+        ]
+    )
+
 
     credit_hours = models.PositiveIntegerField(
-          validators=[
-        MinValueValidator(1),
-        MaxValueValidator(4)
-    ]
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["department", "code"],
-                name="unique_subject_code_per_department"
-            )
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(4)
         ]
-
-    def __str__(self):
-        return f"{self.code} - {self.name}"
-
-class SubjectTeaching(models.Model):
-    subject = models.ForeignKey(
-        Subject,
-        on_delete=models.CASCADE
     )
 
-    teacher = models.ForeignKey(
-        Teacher,
-        on_delete=models.CASCADE
-    )
-    
-    
-    batch = models.ForeignKey(
-        Batch,
-        on_delete=models.PROTECT
-        )
+
     class Meta:
+
         constraints = [
             models.UniqueConstraint(
                 fields=[
                     "department",
-                    "batch",
-                    "subject"
+                    "code"
                 ],
-                name="unique_department_batch_subject"
+                name="unique_subject_code"
             )
         ]
-        
-class AttendanceSession(models.Model):
-    subject_teaching = models.ForeignKey(
-        SubjectTeaching,
-        on_delete=models.CASCADE
-    )
 
-    date = models.DateField()
-    
-    class Meta:
-        constraints = [
-        models.UniqueConstraint(
-            fields=[
-                "subject_teaching",
-                "date"
-            ],
-            name="unique_session_per_day"
-        )
-    ]
 
     def __str__(self):
-        return f"{self.subject_teaching.subject} - {self.date}"
-    
-class Attendance(models.Model):
-    STATUS_CHOICES = (
-        ("P", "Present"),
-        ("A", "Absent")
+        return f"{self.code} - {self.name}"
+
+
+
+
+# =========================
+# Subject Teaching
+# =========================
+
+class SubjectTeaching(models.Model):
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="teachings"
     )
 
-    session = models.ForeignKey(
-        AttendanceSession,
-        on_delete=models.CASCADE
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        related_name="teachings"
     )
+
+
+    batch = models.ForeignKey(
+        Batch,
+        on_delete=models.PROTECT,
+        related_name="teachings"
+    )
+
+
+    academic_session = models.ForeignKey(
+        AcademicSession,
+        on_delete=models.PROTECT,
+        related_name="teachings"
+    )
+
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "subject",
+                    "batch",
+                    "academic_session"
+                ],
+                name="unique_subject_batch_session"
+            )
+        ]
+
+
+    def __str__(self):
+        return f"{self.subject} - {self.batch}"
+
+
+
+
+# =========================
+# Enrollment
+# =========================
+
+class Enrollment(models.Model):
 
     student = models.ForeignKey(
         Student,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="enrollments"
     )
+
+
+    subject_teaching = models.ForeignKey(
+        SubjectTeaching,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "student",
+                    "subject_teaching"
+                ],
+                name="unique_student_subject"
+            )
+        ]
+
+
+    def __str__(self):
+        return f"{self.student} - {self.subject_teaching}"
+
+
+
+
+# =========================
+# Attendance Session
+# =========================
+
+class AttendanceSession(models.Model):
+
+    subject_teaching = models.ForeignKey(
+        SubjectTeaching,
+        on_delete=models.CASCADE,
+        related_name="attendance_sessions"
+    )
+
+
+    date = models.DateField()
+
+
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "subject_teaching",
+                    "date"
+                ],
+                name="unique_attendance_session"
+            )
+        ]
+
+
+    def __str__(self):
+        return f"{self.subject_teaching} - {self.date}"
+
+
+
+
+# =========================
+# Attendance
+# =========================
+
+class Attendance(models.Model):
+
+    STATUS_CHOICES = (
+        ("P","Present"),
+        ("A","Absent")
+    )
+
+
+    session = models.ForeignKey(
+        AttendanceSession,
+        on_delete=models.CASCADE,
+        related_name="attendance"
+    )
+
+
+    enrollment = models.ForeignKey(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name="attendance"
+    )
+
 
     status = models.CharField(
         max_length=1,
         choices=STATUS_CHOICES
     )
 
+
     class Meta:
+
         constraints = [
             models.UniqueConstraint(
-                fields=["session", "student"],
+                fields=[
+                    "session",
+                    "enrollment"
+                ],
                 name="unique_student_attendance"
             )
         ]
