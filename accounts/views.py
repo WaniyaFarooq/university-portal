@@ -4,4 +4,7 @@ from django.shortcuts import render,redirect
 def home(request):
     pass
 
+def student_register(request):
+    pass
     
+       

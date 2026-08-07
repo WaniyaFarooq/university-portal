@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block start %}
+
+<div class="registration-container">
+
+    <form method="POST"
+          enctype="multipart/form-data"
+          class="registration-form">
+
+        {% csrf_token %}
+
+        <div class="form-header">
+            <h3>Create Account</h3>
+            <p>Register to access your university portal</p>
+        </div>
+
+        <!-- Full Name -->
+        <div class="form-group">
+            <label for="full_name">Full Name</label>
+            <input
+                type="text"
+                class="form-control"
+                id="full_name"
+                name="full_name"
+                placeholder="Enter your full name"
+                required
+            >
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+            >
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input
+                type="tel"
+                class="form-control"
+                id="phone_number"
+                name="phone_number"
+                placeholder="03XX-XXXXXXX"
+                required
+            >
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                placeholder="Create a password"
+                required
+            >
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password</label>
+            <input
+                type="password"
+                class="form-control"
+                id="confirm_password"
+                name="confirm_password"
+                placeholder="Confirm your password"
+                required
+            >
+        </div>
+
+        <!-- Profile Picture -->
+        <div class="form-group">
+            <label for="profile_picture">Profile Picture</label>
+
+            <input
+                type="file"
+                class="form-control-file"
+                id="profile_picture"
+                name="profile_picture"
+                accept="image/png, image/jpeg"
+            >
+
+            <small class="form-text">
+                Upload a JPG or PNG image.
+            </small>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="register-btn">
+            Create Account
+        </button>
+
+        <div class="login-link">
+            Already have an account?
+            <a href="#">Login</a>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
